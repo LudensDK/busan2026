@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>釜山旅行スケジュール / Busan Itinerary / 부산 여행 일정</title>
+  <style>
+    :root {
+      --bg-color: #f8fafc;
+      --timeline-color: #cbd5e1;
+      --accent-color: #0ea5e9;
+      --text-main: #1e293b;
+      --text-sub: #475569;
+      --card-bg: #ffffff;
+      --tag-bg: #e0f2fe;
+      --tag-text: #0284c7;
+      --warn-color: #ef4444;
+      --warn-bg: #fef2f2;
+      --vct-color: #3b82f6; /* VCT用の青 */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 40px;
+    }
+
+    /* 多言語表示制御 */
+    .lang-en, .lang-kr { display: none; }
+    
+    body.en .lang-jp { display: none !important; }
+    body.en .lang-en { display: inline !important; }
+    body.en .lang-kr { display: none !important; }
+    
+    body.kr .lang-jp { display: none !important; }
+    body.kr .lang-en { display: none !important; }
+    body.kr .lang-kr { display: inline !important; }
+
+    /* ブロック要素用 */
+    body.en div.lang-en, body.en p.lang-en { display: block !important; }
+    body.kr div.lang-kr, body.kr p.lang-kr { display: block !important; }
+
+    /* ナビゲーション（上部固定） */
+    .controls-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(248, 250, 252, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 15px 15px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto 15px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 言語切り替えボタン */
+    .lang-switcher {
+      display: flex;
+      background: #e2e8f0;
+      border-radius: 8px;
+      padding: 2px;
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: #ffffff;
+      color: var(--accent-color);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    /* 日付タブ切り替え */
+    .day-switcher {
+      display: flex;
+      max-width: 600px;
+      margin: 0 auto;
+      gap: 8px;
+    }
+    .day-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .day-btn.active {
+      background: var(--accent-color);
+      color: #ffffff;
+      border-color: var(--accent-color);
+    }
+    .day-btn .date { display: block; font-size: 0.75rem; opacity: 0.9; font-weight: 500; }
+
+    /* メインコンテンツエリア */
+    .container {
+      max-width: 600px;
+      margin: 20px auto 0;
+      background: var(--card-bg);
+      padding: 24px 16px;
+      border-radius: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .day-content { display: none; }
+    .day-content.active { display: block; animation: fadeIn 0.3s ease; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* メモボックス */
+    .memo-box {
+      background: #fefce8;
+      border-left: 4px solid #facc15;
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #854d0e;
+    }
+
+    /* タイムラインのスタイル */
+    .timeline { position: relative; padding-left: 5px; }
+    .timeline-item { display: flex; position: relative; padding-bottom: 24px; }
+    
+    .time-box {
+      width: 70px;
+      flex-shrink: 0;
+      text-align: right;
+      padding-right: 12px;
+      font-weight: 700;
+      color: var(--accent-color);
+      font-size: 0.9rem;
+      padding-top: 2px;
+      line-height: 1.2;
+    }
+    .time-box .duration { font-size: 0.75rem; color: #94a3b8; font-weight: normal; display: block; margin-top: 2px; }
+
+    .marker { position: relative; width: 20px; flex-shrink: 0; display: flex; justify-content: center; }
+    .marker::before {
+      content: ''; position: absolute; top: 6px; width: 14px; height: 14px;
+      border-radius: 50%; background-color: var(--accent-color);
+      border: 3px solid var(--card-bg); box-shadow: 0 0 0 2px var(--accent-color); z-index: 2;
+    }
+    .marker::after {
+      content: ''; position: absolute; top: 14px; bottom: -10px;
+      width: 2px; background-color: var(--timeline-color); z-index: 1;
+    }
+    .timeline-item:last-child .marker::after { display: none; }
+
+    /* ブロックイベント（VCTなど長時間のもの） */
+    .timeline-item.block-event .marker::before { background-color: var(--vct-color); box-shadow: 0 0 0 2px var(--vct-color); }
+    .timeline-item.block-event .content-box { border-left: 3px solid var(--vct-color); background-color: #eff6ff; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: -5px; }
+    .timeline-item.block-event .time-box { color: var(--vct-color); }
+
+    /* 移動イベント */
+    .timeline-item.transit .content-box { background-color: #f8fafc; border-radius: 12px; padding: 12px 16px; margin-left: 10px; margin-top: -6px; margin-bottom: 8px; }
+    .timeline-item.transit .marker::before { background-color: #94a3b8; box-shadow: 0 0 0 2px #94a3b8; }
+
+    .content-box { flex-grow: 1; padding-left: 16px; padding-bottom: 10px; }
+    .title { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+    .desc { font-size: 0.85rem; color: var(--text-sub); }
+
+    .tag { background-color: var(--tag-bg); color: var(--tag-text); font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+    .tag.warn { background-color: var(--warn-bg); color: var(--warn-color); }
+    .alert-text { color: var(--warn-color); font-weight: 700; display: inline-block; margin-top: 4px; }
+    .icon { font-size: 1.2rem; margin-right: 4px; }
+
+    /* 空の状態（9/7用） */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-sub); }
+    .empty-state h2 { color: var(--text-main); margin: 15px 0 5px; font-size: 1.2rem; }
+  </style>
+</head>
+<body class="jp">
+
+  <div class="controls-wrapper">
+    <div class="header-top">
+      <h1>🇰🇷 <span class="lang-jp">釜山スケジュール</span><span class="lang-en">Busan Trip</span><span class="lang-kr">부산 여행 일정</span></h1>
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="jp" onclick="setLang('jp')">JP</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" data-lang="kr" onclick="setLang('kr')">KR</button>
+      </div>
+    </div>
+    
+    <div class="day-switcher">
+      <button class="day-btn active" data-day="day1" onclick="setDay('day1')">
+        <span class="date">9/5 (Thu)</span>
+        <span class="lang-jp">1日目</span><span class="lang-en">Day 1</span><span class="lang-kr">1일차</span>
+      </button>
+      <button class="day-btn" data-day="day2" onclick="setDay('day2')">
+        <span class="date">9/6 (Fri)</span>
+        <span class="lang-jp">2日目</span><span class="lang-en">Day 2</span><span class="lang-kr">2일차</span>
+      </button>
+      <button class="day-btn" data-day="day3" onclick="setDay('day3')">
+        <span class="date">9/7 (Sat)</span>
+        <span class="lang-jp">3日目</span><span class="lang-en">Day 3</span><span class="lang-kr">3일차</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    
+    <!-- ==============================================
+         DAY 1: 9/5
+    =============================================== -->
+    <div id="day1" class="day-content active">
+      <div class="memo-box">
+        <span class="lang-jp">🚕 メモ: 移動はTaxiを使うこと</span>
+        <span class="lang-en">🚕 Note: Use taxis for all transportation</span>
+        <span class="lang-kr">🚕 메모: 이동은 택시를 이용할 것</span>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="time-box">12:30</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🛬</span> <span class="lang-jp">釜山に到着</span><span class="lang-en">Arrive in Busan</span><span class="lang-kr">부산 도착</span></div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">13:00</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🧳</span> <span class="lang-jp">荷物はデリバリー</span><span class="lang-en">Luggage delivery</span><span class="lang-kr">수하물 배송</span></div>
+            <div class="desc"><span class="lang-jp">（짐캐리 짐배송）</span><span class="lang-en">Zimcarry service</span><span class="lang-kr">짐캐리 짐배송</span></div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">13:30</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚕</span> <span class="lang-jp">空港を出発</span><span class="lang-en">Leave the airport</span><span class="lang-kr">공항을 출발</span></div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">14:00</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🍜</span> <span class="lang-jp">お昼ごはん</span><span class="lang-en">Lunch</span><span class="lang-kr">점심 식사</span></div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">15:00</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🏟️</span> <span class="lang-jp">VCT 開場</span><span class="lang-en">VCT Venue Opens</span><span class="lang-kr">VCT 입장 시작</span></div>
+          </div>
+        </div>
+
+        <div class="timeline-item block-event">
+          <div class="time-box">17:00<span class="duration">~ 22:30</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🎮</span> <span class="lang-jp">VCT 試合開始</span><span class="lang-en">VCT Match Starts</span><span class="lang-kr">VCT 경기 시작</span></div>
+            <div class="desc"><span class="lang-jp">22:30頃まで</span><span class="lang-en">Until approx 22:30</span><span class="lang-kr">약 22:30까지</span></div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">22:30</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🍻</span> <span class="lang-jp">居酒屋など</span><span class="lang-en">Izakaya (Pub) etc.</span><span class="lang-kr">이자카야 등</span></div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">00:00</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🏨</span> <span class="lang-jp">チェックイン締め切り</span><span class="lang-en">Check-in deadline</span><span class="lang-kr">체크인 마감</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         DAY 2: 9/6
+    =============================================== -->
+    <div id="day2" class="day-content">
+      <div class="timeline">
+        
+        <div class="timeline-item">
+          <div class="time-box">10:00</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🏨</span> <span class="lang-jp">起床・外出準備</span><span class="lang-en">Wake up & Prep</span><span class="lang-kr">기상 및 외출 준비</span></div>
+            <div class="desc">
+              <span class="lang-jp">ホテル（クラウンハーバーホテル釜山）ロビーに集合</span>
+              <span class="lang-en">Meet at hotel lobby (Crown Harbor Hotel)</span>
+              <span class="lang-kr">호텔(크라운하버 호텔) 로비 집합</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item transit">
+          <div class="time-box">10:00<span class="duration">~ 10:15</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚶‍♂️</span> <span class="lang-jp">ホテル ➡️ 市場</span><span class="lang-en">Hotel ➡️ Market</span><span class="lang-kr">호텔 ➡️ 시장</span></div>
+            <div class="desc">
+              <span class="lang-jp">徒歩15分 または タクシー</span>
+              <span class="lang-en">15 min walk or Taxi</span>
+              <span class="lang-kr">도보 15분 또는 택시</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">10:15<span class="duration">~ 11:20</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🛍️</span> <span class="lang-jp">国際・カントン市場</span><span class="lang-en">Gukje/Bupyeong Market</span><span class="lang-kr">국제·깡통시장</span></div>
+            <div class="desc">
+              <span class="lang-jp">昼食に備えて食べ歩きは控えめに！</span>
+              <span class="lang-en">Save room for lunch!</span>
+              <span class="lang-kr">점심을 위해 군것질은 적당히!</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item transit">
+          <div class="time-box">11:20<span class="duration">~ 12:15</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚕</span> <span class="lang-jp">南浦洞 ➡️ 海雲台</span><span class="lang-en">Nampo ➡️ Haeundae</span><span class="lang-kr">남포동 ➡️ 해운대</span></div>
+            <div class="desc">
+              <span class="lang-jp">タクシー2台乗車（約50〜55分）</span>
+              <span class="lang-en">Take 2 Taxis (Approx 50-55 min)</span>
+              <span class="lang-kr">택시 2대 탑승 (약 50~55분)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">12:30<span class="duration">~ 13:30</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🦀</span> <span class="lang-jp">カンジャンケジャン</span><span class="lang-en">Soy Sauce Crab</span><span class="lang-kr">간장게장 점심</span>
+              <span class="tag"><span class="lang-jp">予約済</span><span class="lang-en">Reserved</span><span class="lang-kr">예약완료</span></span>
+            </div>
+            <div class="desc">
+              <span class="lang-jp">手洗い・会計を含めて1時間でまとめる</span>
+              <span class="lang-en">Finish meal within 1 hour</span>
+              <span class="lang-kr">식사 및 계산까지 1시간 내로 완료</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">13:30<span class="duration">~ 14:15</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🐰</span> <span class="lang-jp">ビーチ散策＆ミッフィー</span><span class="lang-en">Beach & Miffy Store</span><span class="lang-kr">해변 산책 & 미피 스토어</span></div>
+            <div class="desc">
+              <span class="lang-jp">尾浦（ミポ）方面へ移動</span>
+              <span class="lang-en">Walk towards Mipo direction</span>
+              <span class="lang-kr">미포 방면으로 이동</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item transit">
+          <div class="time-box">14:15<span class="duration">~ 14:30</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚶‍♀️</span> <span class="lang-jp">尾浦停留所へ移動</span><span class="lang-en">Move to Mipo Stn.</span><span class="lang-kr">미포 정거장 이동</span></div>
+            <div class="desc">
+              <span class="lang-jp">⚠️ 14:20までに改札列に並ぶ</span>
+              <span class="lang-en">⚠️ Line up at gate by 14:20</span>
+              <span class="lang-kr">⚠️ 14:20까지 개찰구 줄서기</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">14:30<span class="duration">~ 14:40</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚋</span> <span class="lang-jp">海辺列車に乗車</span><span class="lang-en">Beach Train</span><span class="lang-kr">해변열차 탑승</span>
+              <span class="tag"><span class="lang-jp">予約済</span><span class="lang-en">Reserved</span><span class="lang-kr">예약완료</span></span>
+            </div>
+            <div class="desc">
+              <span class="lang-jp">尾浦 ➡️ 海月（ヘウォル）展望台</span>
+              <span class="lang-en">Mipo ➡️ Haewol Observatory</span>
+              <span class="lang-kr">미포 ➡️ 해월 전망대 하차</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">14:40<span class="duration">~ 15:05</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🔭</span> <span class="lang-jp">海月展望台</span><span class="lang-en">Haewol Observatory</span><span class="lang-kr">해월 전망대 견학</span></div>
+            <div class="desc">
+              <span class="lang-jp">海をバックに記念撮影📸</span>
+              <span class="lang-en">Take photos with ocean view 📸</span>
+              <span class="lang-kr">바다를 배경으로 기념 촬영 📸</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item transit">
+          <div class="time-box">15:05<span class="duration">~ 15:15</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚶‍♂️</span> <span class="lang-jp">展望台 ➡️ 青沙浦</span><span class="lang-en">Observatory ➡️ Cheongsapo</span><span class="lang-kr">전망대 ➡️ 청사포</span></div>
+            <div class="desc">
+              <span class="lang-jp">海沿いの遊歩道を徒歩（約10分）</span>
+              <span class="lang-en">Walk along the deck path (10 min)</span>
+              <span class="lang-kr">해변 나무 데크길 도보 이동 (약 10분)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">15:15<span class="duration">~ 15:55</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🍪</span> <span class="lang-jp">釜山サンド＆撮影</span><span class="lang-en">Busan Sand & Photo</span><span class="lang-kr">부산샌드 & 사진</span></div>
+            <div class="desc">
+              <span class="lang-jp">有名な踏切（スラムダンク風）で撮影🚃</span>
+              <span class="lang-en">Take photos at the famous crossing 🚃</span>
+              <span class="lang-kr">유명한 기찻길(슬램덩크 풍)에서 촬영 🚃</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item transit">
+          <div class="time-box">16:00<span class="duration">~ 17:00</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚕</span> <span class="lang-jp">青沙浦 ➡️ 釜山駅</span><span class="lang-en">Cheongsapo ➡️ Busan Stn.</span><span class="lang-kr">청사포 ➡️ 부산역</span>
+              <span class="tag warn"><span class="lang-jp">超重要</span><span class="lang-en">Crucial</span><span class="lang-kr">중요</span></span>
+            </div>
+            <div class="desc">
+              <span class="alert-text">
+                <span class="lang-jp">※16:00ちょうどのタクシー乗車が必須！</span>
+                <span class="lang-en">*Must take taxi exactly at 16:00!</span>
+                <span class="lang-kr">※16:00 정각에 택시 탑승 필수!</span>
+              </span><br>
+              <span class="lang-jp">週末の渋滞を考慮して移動約1時間</span>
+              <span class="lang-en">Heavy weekend traffic (Takes 1 hr)</span>
+              <span class="lang-kr">주말 교통체증 고려 (이동 약 1시간)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">17:00<span class="duration">~ 18:00</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🍽️</span> <span class="lang-jp">釜山駅周辺で夕食</span><span class="lang-en">Dinner at Busan Stn.</span><span class="lang-kr">부산역 주변 저녁</span>
+              <span class="tag"><span class="lang-jp">予約済</span><span class="lang-en">Reserved</span><span class="lang-kr">예약완료</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">18:05<span class="duration">~ 19:05</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🍧</span> <span class="lang-jp">ピンス（かき氷）</span><span class="lang-en">Bingsu Time</span><span class="lang-kr">빙수 타임</span></div>
+            <div class="desc">
+              <span class="lang-jp">カフェで休憩</span>
+              <span class="lang-en">Rest at a cafe</span>
+              <span class="lang-kr">카페에서 휴식</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item transit">
+          <div class="time-box">19:10<span class="duration">~ 19:30</span></div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚶‍♀️</span> <span class="lang-jp">夜景バス乗り場へ</span><span class="lang-en">Move to Night Bus</span><span class="lang-kr">야경 버스 정류장</span></div>
+            <div class="desc">
+              <span class="lang-jp">5人並んで座れるよう早めに待機！</span>
+              <span class="lang-en">Arrive early to sit together!</span>
+              <span class="lang-kr">5명 같이 앉을 수 있게 일찍 대기!</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="time-box">19:30</div>
+          <div class="marker"></div>
+          <div class="content-box">
+            <div class="title"><span class="icon">🚌✨</span> <span class="lang-jp">夜景ツアースタート</span><span class="lang-en">Night Tour Starts</span><span class="lang-kr">야경 투어 시작</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==============================================
+         DAY 3: 9/7
+    =============================================== -->
+    <div id="day3" class="day-content">
+      <div class="empty-state">
+        <div style="font-size:3.5rem; margin-bottom:10px;">🤔</div>
+        <h2>
+          <span class="lang-jp">何も決まっていない</span>
+          <span class="lang-en">Nothing planned yet</span>
+          <span class="lang-kr">일정 미정</span>
+        </h2>
+        <p>
+          <span class="lang-jp">自由行動の日です！</span>
+          <span class="lang-en">It's a free day!</span>
+          <span class="lang-kr">자유 시간입니다!</span>
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 言語切り替えロジック
+    function setLang(lang) {
+      document.body.className = lang;
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        if(btn.dataset.lang === lang) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    // 日付タブ切り替えロジック
+    function setDay(dayId) {
+      document.querySelectorAll('.day-content').forEach(el => {
+        el.classList.remove('active');
+      });
+      document.getElementById(dayId).classList.add('active');
+      
+      document.querySelectorAll('.day-btn').forEach(btn => {
+        if(btn.dataset.day === dayId) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      
+      // タブ切り替え時に上部へスクロール
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>
